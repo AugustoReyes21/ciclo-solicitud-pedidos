@@ -1,16 +1,16 @@
-import { spawn } from 'node:child_process';
+import { ChildProcess, spawn } from 'node:child_process';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
   const server = spawn(process.execPath, ['dist/main.js'], {
-    env: { ...process.env, PORT: '3100' },
+    env: { ...process.env, PORT: '3100', HOST: '127.0.0.1' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let serverError = '';
   server.stderr.on('data', (chunk) => (serverError += chunk.toString()));
-  await waitForServer(serverError);
+  await waitForServer(server, () => serverError);
 
   try {
     const seedCounts = {
@@ -35,7 +35,7 @@ async function main() {
       seedCounts,
     );
 
-    const invalid = await fetch('http://localhost:3100/orders', {
+    const invalid = await fetch('http://127.0.0.1:3100/orders', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -58,7 +58,7 @@ async function main() {
       where: { sku: 'MOU-001' },
     });
     const externalCode = `VERIFY-${Date.now()}`;
-    const valid = await fetch('http://localhost:3100/orders', {
+    const valid = await fetch('http://127.0.0.1:3100/orders', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -93,7 +93,7 @@ async function main() {
     try {
       await prisma.$executeRaw`
         INSERT INTO "OrderItem" ("orderId", "productId", "quantity", "unitPriceCents")
-        VALUES (${persisted.id}, ${keyboardSafeId(mouse.id)}, 0, 100)
+        VALUES (${persisted.id}, ${mouse.id}, 0, 100)
       `;
     } catch {
       constraintProtected = true;
@@ -110,20 +110,24 @@ async function main() {
   }
 }
 
-async function waitForServer(initialError: string) {
-  for (let attempt = 0; attempt < 30; attempt += 1) {
+async function waitForServer(
+  server: ChildProcess,
+  getServerError: () => string,
+) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (server.exitCode !== null) {
+      throw new Error(
+        `La API terminó con código ${server.exitCode}. ${getServerError()}`,
+      );
+    }
     try {
-      const response = await fetch('http://localhost:3100/health');
+      const response = await fetch('http://127.0.0.1:3100/health');
       if (response.ok) return;
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
   }
-  throw new Error(`La API no inició. ${initialError}`);
-}
-
-function keyboardSafeId(id: number) {
-  return id;
+  throw new Error(`La API no inició. ${getServerError()}`);
 }
 
 main().catch((error) => {
