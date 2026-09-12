@@ -4,6 +4,7 @@ dist/
 .env.*
 !.env.example
 npm-debug.log*
+debug.log
 .local/
 entrega-local/
 *.mp4
