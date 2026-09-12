@@ -1,0 +1,43 @@
+{
+  "name": "ciclo-solicitud-pedidos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API NestJS que demuestra el ciclo completo de una solicitud y migraciones seguras con Prisma/PostgreSQL",
+  "license": "MIT",
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "format": "prettier --write \"src/**/*.ts\" \"prisma/**/*.ts\" \"scripts/**/*.ts\"",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:rebuild": "prisma migrate reset --force",
+    "db:status": "prisma migrate status",
+    "verify:fresh": "prisma migrate reset --force && prisma db seed && npm run build && tsx scripts/verify.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.2.3",
+    "@nestjs/core": "^11.2.3",
+    "@nestjs/platform-express": "^11.2.3",
+    "@prisma/client": "6.19.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "dotenv": "^17.2.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.24",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.5.2",
+    "prettier": "^3.6.2",
+    "prisma": "6.19.3",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.0",
+    "multer": "2.3.0"
+  }
+}
