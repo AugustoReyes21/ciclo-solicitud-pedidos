@@ -1,0 +1,35 @@
+name: Verificación
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  rebuild-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: pedidos
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d pedidos"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgresql://app:app@localhost:5432/pedidos?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev
+      - run: npm run verify:fresh
